@@ -9,6 +9,9 @@
 import UIKit
 import AVFoundation
 
+
+/// Class to control playback of sounds using various effects.
+///
 class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
 
     @IBOutlet weak var slowAudio: UIButton!
@@ -49,39 +52,44 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
             playBackSpeed(0.5)
     }
     
+    /// Common function missed by the previous udacity reviewer despite his feedback
+    /// Anyway is a function to set the rate of playback of the audio player
     func playBackSpeed(speed: Float) {
-        if let player = audioPlayer {
-            audioEngine.stop()
-            audioEngine.reset()
-            player.stop()
-            player.rate = speed
-            player.currentTime = 0.0
-            player.play()
-        }
+        stopAll()
+        audioPlayer.rate = speed
+        audioPlayer.play()
+
     }
+    
+    /// Stops the audio player
     @IBAction func stopAudio(sender: UIButton) {
-        //Stop the audio player
-        if let player = audioPlayer {
-            player.stop()
-            audioEngine.stop()
-            audioEngine.reset()
-        }
+       
+        stopAll()
     }
     
-    
+    /// Create a chipmunk sound
+    /// Sets the pitch to 1000
     @IBAction func playChipmunkAudio(sender: UIButton) {
         playAudioWithVariablePitch(1000)
     }
     
+    /// Create a Darth Vader sound
+    /// Sets the pitch to -1000
     @IBAction func playDarthvaderAudio(sender: UIButton) {
         playAudioWithVariablePitch(-1000)
     }
     
+    
+    /// Function to set the audioplayer for applying two sounds enhancers
+    /// Changing the pitch of the sound and for adjusting the reverb sound.
+    /// The pitch set from the only floating point parameter passed.
+    /// The reverb is set to the cathedral style
+    ///
     func playAudioWithVariablePitch(pitch: Float) {
-        audioPlayer.stop()
-        audioEngine.stop()
-        audioEngine.reset()
+        // stop the player and engine
+        stopAll()
         
+        // Setup the node and effects - pitch and reverb.
         var audioPlayerNode = AVAudioPlayerNode()
         var changePitchEffect = AVAudioUnitTimePitch()
         var reverbEffect = AVAudioUnitReverb()
@@ -90,19 +98,33 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
         reverbEffect.loadFactoryPreset(AVAudioUnitReverbPreset.Cathedral)
         reverbEffect.wetDryMix = 50
         
+        // Set the audio engine
         audioEngine.attachNode(audioPlayerNode)
         audioEngine.attachNode(changePitchEffect)
         audioEngine.attachNode(reverbEffect)
         
+        // Connect it all together
         audioEngine.connect(audioPlayerNode, to: changePitchEffect, format: nil)
         audioEngine.connect(changePitchEffect, to: reverbEffect, format: nil)
         audioEngine.connect(reverbEffect, to: audioEngine.outputNode, format: nil)
         
-        
+        // Stuff in the file name and play
         audioPlayerNode.scheduleFile(audioFile, atTime: nil, completionHandler: nil)
         audioEngine.startAndReturnError(nil)
         audioPlayerNode.play()
         
+    }
+    
+    /// Function to abstract the stop and reset functions on the audioplayer and the audioengine.
+    /// No parameters
+    /// Stops the audioPlayer and sets currentTime parameter to 0.0
+    /// Stop and Resets the audioengine
+    func stopAll(){
+        
+        audioPlayer.stop()
+        audioEngine.stop()
+        audioEngine.reset()
+        audioPlayer.currentTime = 0.0
     }
     
 }
